@@ -12,6 +12,7 @@ export interface Notification {
   type: NotificationType;
   message: string;
   timestamp: Date;
+  isRead: boolean;
 }
 
 export type NotificationFilter = NotificationType | "all";

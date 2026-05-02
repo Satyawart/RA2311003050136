@@ -2,11 +2,14 @@ import { memo } from "react";
 import {
   Card,
   CardContent,
+  CardActionArea,
   Typography,
   Chip,
   Stack,
+  Box,
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import WorkOutlinedIcon from "@mui/icons-material/WorkOutlined";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import EventIcon from "@mui/icons-material/Event";
@@ -66,46 +69,60 @@ const PRIORITY_STYLES: Record<NotificationType, SxProps<Theme>> = {
 
 interface NotificationCardProps {
   notification: Notification;
+  onMarkAsRead: (id: string) => void;
 }
 
-function NotificationCardInner({ notification }: NotificationCardProps) {
+function NotificationCardInner({ notification, onMarkAsRead }: NotificationCardProps) {
   const config = TYPE_CONFIG[notification.type];
   const prioritySx = PRIORITY_STYLES[notification.type];
+  const isRead = notification.isRead;
 
   return (
     <Card
       variant={notification.type === "placement" ? "elevation" : "outlined"}
       sx={{
-        transition: "box-shadow 0.2s ease, transform 0.15s ease",
-        ...prioritySx,
+        transition: "box-shadow 0.2s ease, transform 0.15s ease, opacity 0.2s ease",
+        opacity: isRead ? 0.65 : 1,
+        ...(isRead && { bgcolor: "action.hover" }),
+        ...(!isRead && prioritySx),
       }}
     >
-      <CardContent>
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 1,
-          }}
-        >
-          <Chip
-            icon={config.icon}
-            label={config.label}
-            color={config.color}
-            size="small"
-            variant={notification.type === "placement" ? "filled" : "outlined"}
-          />
-          <Typography variant="caption" color="text.secondary">
-            {formatTimestamp(notification.timestamp)}
-          </Typography>
-        </Stack>
-        <Typography variant="body1">{notification.message}</Typography>
-      </CardContent>
+      <CardActionArea onClick={() => onMarkAsRead(notification.id)} disabled={isRead}>
+        <CardContent>
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 1,
+            }}
+          >
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <Chip
+                icon={config.icon}
+                label={config.label}
+                color={config.color}
+                size="small"
+                variant={notification.type === "placement" && !isRead ? "filled" : "outlined"}
+              />
+              {!isRead && (
+                <FiberManualRecordIcon
+                  sx={{ fontSize: 8, color: "primary.main" }}
+                />
+              )}
+            </Stack>
+            <Typography variant="caption" color="text.secondary">
+              {formatTimestamp(notification.timestamp)}
+            </Typography>
+          </Stack>
+          <Typography variant="body1">{notification.message}</Typography>
+        </CardContent>
+      </CardActionArea>
     </Card>
   );
 }
 
 export const NotificationCard = memo(NotificationCardInner);
+
 
 

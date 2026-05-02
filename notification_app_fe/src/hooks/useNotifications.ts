@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import type { Notification, NotificationFilter } from "../types/notification";
 import { fetchNotifications } from "../services/notificationService";
 import { sortNotifications } from "../utils/sortNotifications";
@@ -18,6 +18,7 @@ interface UseNotificationsReturn {
   page: number;
   totalPages: number;
   goToPage: (p: number) => void;
+  markAsRead: (id: string) => void;
 }
 
 export function useNotifications(): UseNotificationsReturn {
@@ -28,8 +29,11 @@ export function useNotifications(): UseNotificationsReturn {
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const [page, setPage] = useState(1);
 
+  const hasFetched = useRef(false);
+
   useEffect(() => {
-    let cancelled = false;
+    if (hasFetched.current) return;
+    hasFetched.current = true;
 
     async function load() {
       setLoading(true);
@@ -38,7 +42,6 @@ export function useNotifications(): UseNotificationsReturn {
 
       try {
         const fetchedNotifications = await fetchNotifications();
-        if (cancelled) return;
 
         if (fetchedNotifications.length === 0) {
           logger.warn("Using fallback mock data", {
@@ -54,8 +57,6 @@ export function useNotifications(): UseNotificationsReturn {
           setAllNotifications(fetchedNotifications);
         }
       } catch (err) {
-        if (cancelled) return;
-
         const failureReason = err instanceof Error ? err.message : "Unknown error";
         logger.error("Using fallback mock data", {
           reason: failureReason,
@@ -65,14 +66,11 @@ export function useNotifications(): UseNotificationsReturn {
         setUsingFallback(true);
         setAllNotifications(MOCK_NOTIFICATIONS);
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     }
 
     load();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   const sorted = useMemo(
@@ -113,6 +111,12 @@ export function useNotifications(): UseNotificationsReturn {
     setPage(p);
   }, []);
 
+  const markAsRead = useCallback((id: string) => {
+    setAllNotifications((prev) =>
+      prev.map((n) => (n.id === id && !n.isRead ? { ...n, isRead: true } : n))
+    );
+  }, []);
+
   return {
     notifications: pageItems,
     loading,
@@ -124,5 +128,6 @@ export function useNotifications(): UseNotificationsReturn {
     page: safePage,
     totalPages,
     goToPage,
+    markAsRead,
   };
 }

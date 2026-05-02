@@ -33,6 +33,7 @@ export default function NotificationsPage() {
     page,
     totalPages,
     goToPage,
+    markAsRead,
   } = useNotifications();
 
   const isInitialRender = useRef(true);
@@ -104,7 +105,7 @@ export default function NotificationsPage() {
         {!loading && hasNotifications && (
           <Stack spacing={2}>
             {notifications.map((n) => (
-              <NotificationCard key={n.id} notification={n} />
+              <NotificationCard key={n.id} notification={n} onMarkAsRead={markAsRead} />
             ))}
           </Stack>
         )}

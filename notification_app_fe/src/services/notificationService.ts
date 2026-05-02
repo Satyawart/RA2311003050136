@@ -11,6 +11,7 @@ function parseNotification(raw: RawNotification): Notification {
     type: raw.type,
     message: raw.message,
     timestamp: isNaN(parsed.getTime()) ? new Date(0) : parsed,
+    isRead: false,
   };
 }
 
