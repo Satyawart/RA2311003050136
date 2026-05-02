@@ -25,6 +25,7 @@ export default function NotificationsPage() {
     notifications,
     loading,
     error,
+    usingFallback,
     filter,
     setFilter,
     page,
@@ -32,8 +33,10 @@ export default function NotificationsPage() {
     goToPage,
   } = useNotifications();
 
+  const hasNotifications = notifications.length > 0;
+
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
+    <Container maxWidth="md" sx={{ py: 4 }}>
       <Typography variant="h5" sx={{ fontWeight: 600 }} gutterBottom>
         Notifications
       </Typography>
@@ -60,13 +63,19 @@ export default function NotificationsPage() {
         </Box>
       )}
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+      {!loading && usingFallback && hasNotifications && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Unable to fetch latest notifications. Showing recent updates.
         </Alert>
       )}
 
-      {!loading && !error && notifications.length === 0 && (
+      {!loading && error && !hasNotifications && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Something went wrong. Please try again later.
+        </Alert>
+      )}
+
+      {!loading && !error && !hasNotifications && (
         <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
           No notifications found.
         </Typography>
@@ -92,3 +101,4 @@ export default function NotificationsPage() {
     </Container>
   );
 }
+
