@@ -1,10 +1,17 @@
 export type NotificationType = "placement" | "result" | "event";
 
-export interface Notification {
+export interface RawNotification {
   id: string;
   type: NotificationType;
   message: string;
   timestamp: string;
+}
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  message: string;
+  timestamp: Date;
 }
 
 export type NotificationFilter = NotificationType | "all";

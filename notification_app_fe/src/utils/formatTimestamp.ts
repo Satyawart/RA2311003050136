@@ -1,5 +1,4 @@
-export function formatTimestamp(iso: string): string {
-  const date = new Date(iso);
+export function formatTimestamp(date: Date): string {
   if (isNaN(date.getTime())) return "Invalid date";
 
   return date.toLocaleString("en-US", {

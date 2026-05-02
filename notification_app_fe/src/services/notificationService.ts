@@ -1,14 +1,36 @@
-import type { Notification } from "../types/notification";
+import type { RawNotification, Notification } from "../types/notification";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const NOTIFICATIONS_URL =
+  "http://20.207.122.201/evaluation-service/notifications";
+
+function parseNotification(raw: RawNotification): Notification {
+  const parsed = new Date(raw.timestamp);
+  return {
+    id: raw.id,
+    type: raw.type,
+    message: raw.message,
+    timestamp: isNaN(parsed.getTime()) ? new Date(0) : parsed,
+  };
+}
 
 export async function fetchNotifications(): Promise<Notification[]> {
-  const response = await fetch(`${API_BASE}/notifications`);
+  let response: Response;
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch notifications (${response.status})`);
+  try {
+    response = await fetch(NOTIFICATIONS_URL);
+  } catch {
+    throw new Error("Network error — unable to reach the notification server.");
   }
 
-  const data: Notification[] = await response.json();
-  return data;
+  if (!response.ok) {
+    throw new Error(
+      `Server responded with ${response.status} ${response.statusText}`
+    );
+  }
+
+  const body: unknown = await response.json();
+
+  const rawList: RawNotification[] = Array.isArray(body) ? body : [];
+
+  return rawList.map(parseNotification);
 }

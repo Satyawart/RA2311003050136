@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import type { Notification, NotificationFilter } from "../types/notification";
+import { fetchNotifications } from "../services/notificationService";
 import { sortNotifications } from "../utils/sortNotifications";
 import { MOCK_NOTIFICATIONS } from "../mocks/notifications";
 
@@ -31,12 +32,15 @@ export function useNotifications(): UseNotificationsReturn {
       setError(null);
 
       try {
-        // Swap with fetchNotifications() when the backend is available
-        await new Promise((r) => setTimeout(r, 400));
-        if (!cancelled) setAllNotifications(MOCK_NOTIFICATIONS);
+        const data = await fetchNotifications();
+        if (!cancelled) {
+          setAllNotifications(data.length > 0 ? data : MOCK_NOTIFICATIONS);
+        }
       } catch (err) {
-        if (!cancelled)
+        if (!cancelled) {
           setError(err instanceof Error ? err.message : "Unknown error");
+          setAllNotifications(MOCK_NOTIFICATIONS);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -48,19 +52,29 @@ export function useNotifications(): UseNotificationsReturn {
     };
   }, []);
 
-  const filtered = useMemo(() => {
-    const subset =
-      filter === "all"
-        ? allNotifications
-        : allNotifications.filter((n) => n.type === filter);
-    return sortNotifications(subset);
-  }, [allNotifications, filter]);
+  // Stage 1: Sort once when raw data changes (not on filter/page change)
+  const sorted = useMemo(
+    () => sortNotifications(allNotifications),
+    [allNotifications]
+  );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  // Stage 2: Filter the pre-sorted list (skips re-sort on filter change)
+  const filtered = useMemo(
+    () =>
+      filter === "all" ? sorted : sorted.filter((n) => n.type === filter),
+    [sorted, filter]
+  );
+
+  // Stage 3: Derive pagination metadata from filtered list
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE)),
+    [filtered.length]
+  );
 
   const safePage = Math.min(page, totalPages);
 
-  const notifications = useMemo(
+  // Stage 4: Slice the current page (only recalculates on page or filter change)
+  const pageItems = useMemo(
     () =>
       filtered.slice(
         (safePage - 1) * ITEMS_PER_PAGE,
@@ -77,7 +91,7 @@ export function useNotifications(): UseNotificationsReturn {
   const goToPage = useCallback((p: number) => setPage(p), []);
 
   return {
-    notifications,
+    notifications: pageItems,
     loading,
     error,
     filter,
