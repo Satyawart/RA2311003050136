@@ -6,6 +6,7 @@ import {
   Chip,
   Stack,
 } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material/styles";
 import WorkOutlinedIcon from "@mui/icons-material/WorkOutlined";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import EventIcon from "@mui/icons-material/Event";
@@ -33,12 +34,30 @@ const TYPE_CONFIG: Record<
   },
 };
 
+const PRIORITY_STYLES: Record<NotificationType, SxProps<Theme>> = {
+  placement: {
+    borderLeft: "4px solid",
+    borderLeftColor: "primary.main",
+    bgcolor: "rgba(63, 81, 181, 0.04)",
+  },
+  result: {
+    borderLeft: "3px solid",
+    borderLeftColor: "success.main",
+    bgcolor: "rgba(76, 175, 80, 0.03)",
+  },
+  event: {
+    borderLeft: "2px solid",
+    borderLeftColor: "divider",
+  },
+};
+
 interface NotificationCardProps {
   notification: Notification;
 }
 
 function NotificationCardInner({ notification }: NotificationCardProps) {
   const config = TYPE_CONFIG[notification.type];
+  const prioritySx = PRIORITY_STYLES[notification.type];
 
   return (
     <Card
@@ -49,6 +68,7 @@ function NotificationCardInner({ notification }: NotificationCardProps) {
           boxShadow: 4,
           transform: "translateY(-2px)",
         },
+        ...prioritySx,
       }}
     >
       <CardContent>
@@ -78,3 +98,4 @@ function NotificationCardInner({ notification }: NotificationCardProps) {
 }
 
 export const NotificationCard = memo(NotificationCardInner);
+
