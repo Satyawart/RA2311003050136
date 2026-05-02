@@ -3,6 +3,7 @@ import type { Notification, NotificationFilter } from "../types/notification";
 import { fetchNotifications } from "../services/notificationService";
 import { sortNotifications } from "../utils/sortNotifications";
 import { MOCK_NOTIFICATIONS } from "../mocks/notifications";
+import { logger } from "../../logging_middleware/logger";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -32,13 +33,28 @@ export function useNotifications(): UseNotificationsReturn {
       setError(null);
 
       try {
-        const data = await fetchNotifications();
+        const fetchedNotifications = await fetchNotifications();
         if (!cancelled) {
-          setAllNotifications(data.length > 0 ? data : MOCK_NOTIFICATIONS);
+          const usingFallback = fetchedNotifications.length === 0;
+          if (usingFallback) {
+            logger.warn("Empty response from API, falling back to mock data", {
+              mockCount: MOCK_NOTIFICATIONS.length,
+            });
+          } else {
+            logger.info("Notifications loaded into state", {
+              count: fetchedNotifications.length,
+            });
+          }
+          setAllNotifications(usingFallback ? MOCK_NOTIFICATIONS : fetchedNotifications);
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Unknown error");
+          const errorMessage = err instanceof Error ? err.message : "Unknown error";
+          logger.error("useNotifications: fetch failed, using mock fallback", {
+            error: errorMessage,
+            mockCount: MOCK_NOTIFICATIONS.length,
+          });
+          setError(errorMessage);
           setAllNotifications(MOCK_NOTIFICATIONS);
         }
       } finally {
@@ -84,9 +100,10 @@ export function useNotifications(): UseNotificationsReturn {
   );
 
   const handleFilterChange = useCallback((f: NotificationFilter) => {
+    logger.info("Filter changed", { from: filter, to: f });
     setFilter(f);
     setPage(1);
-  }, []);
+  }, [filter]);
 
   const goToPage = useCallback((p: number) => setPage(p), []);
 
@@ -101,3 +118,4 @@ export function useNotifications(): UseNotificationsReturn {
     goToPage,
   };
 }
+

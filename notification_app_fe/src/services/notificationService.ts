@@ -1,4 +1,5 @@
 import type { RawNotification, Notification } from "../types/notification";
+import { logger } from "../../logging_middleware/logger";
 
 const NOTIFICATIONS_URL =
   "http://20.207.122.201/evaluation-service/notifications";
@@ -14,23 +15,37 @@ function parseNotification(raw: RawNotification): Notification {
 }
 
 export async function fetchNotifications(): Promise<Notification[]> {
+  logger.info("Fetching notifications", { url: NOTIFICATIONS_URL });
+
   let response: Response;
 
   try {
     response = await fetch(NOTIFICATIONS_URL);
-  } catch {
-    throw new Error("Network error — unable to reach the notification server.");
+  } catch (err) {
+    const networkError = "Network error — unable to reach the notification server.";
+    logger.error(networkError, {
+      url: NOTIFICATIONS_URL,
+      reason: err instanceof Error ? err.message : "unknown",
+    });
+    throw new Error(networkError);
   }
 
   if (!response.ok) {
-    throw new Error(
-      `Server responded with ${response.status} ${response.statusText}`
-    );
+    const statusMsg = `Server responded with ${response.status} ${response.statusText}`;
+    logger.error("Notification fetch failed", {
+      status: response.status,
+      statusText: response.statusText,
+    });
+    throw new Error(statusMsg);
   }
 
   const body: unknown = await response.json();
-
   const rawList: RawNotification[] = Array.isArray(body) ? body : [];
+
+  logger.info("Notifications fetched successfully", {
+    count: rawList.length,
+    hadValidBody: Array.isArray(body),
+  });
 
   return rawList.map(parseNotification);
 }
