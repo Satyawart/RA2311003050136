@@ -6,7 +6,6 @@ import {
   Typography,
   Chip,
   Stack,
-  Box,
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
