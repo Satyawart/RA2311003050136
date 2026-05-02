@@ -3,7 +3,7 @@ import type { Notification, NotificationFilter } from "../types/notification";
 import { fetchNotifications } from "../services/notificationService";
 import { sortNotifications } from "../utils/sortNotifications";
 import { MOCK_NOTIFICATIONS } from "../mocks/notifications";
-import { logger } from "../../logging_middleware/logger";
+import { logger } from "../logging_middleware/logger";
 
 const ITEMS_PER_PAGE = 5;
 

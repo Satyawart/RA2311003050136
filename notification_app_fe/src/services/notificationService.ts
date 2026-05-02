@@ -1,5 +1,5 @@
 import type { RawNotification, Notification } from "../types/notification";
-import { logger } from "../../logging_middleware/logger";
+import { logger } from "../logging_middleware/logger";
 
 const NOTIFICATIONS_URL =
   "http://20.207.122.201/evaluation-service/notifications";
