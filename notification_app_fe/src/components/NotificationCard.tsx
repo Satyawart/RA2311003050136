@@ -124,5 +124,3 @@ function NotificationCardInner({ notification, onMarkAsRead }: NotificationCardP
 
 export const NotificationCard = memo(NotificationCardInner);
 
-
-
