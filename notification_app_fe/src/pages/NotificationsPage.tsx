@@ -36,69 +36,71 @@ export default function NotificationsPage() {
   const hasNotifications = notifications.length > 0;
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h5" sx={{ fontWeight: 600 }} gutterBottom>
-        Notifications
-      </Typography>
-
-      <ToggleButtonGroup
-        value={filter}
-        exclusive
-        onChange={(_e, val) => {
-          if (val !== null) setFilter(val as NotificationFilter);
-        }}
-        size="small"
-        sx={{ mb: 3 }}
-      >
-        {FILTER_OPTIONS.map((opt) => (
-          <ToggleButton key={opt.value} value={opt.value}>
-            {opt.label}
-          </ToggleButton>
-        ))}
-      </ToggleButtonGroup>
-
-      {loading && (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-          <CircularProgress />
-        </Box>
-      )}
-
-      {!loading && usingFallback && hasNotifications && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Unable to fetch latest notifications. Showing recent updates.
-        </Alert>
-      )}
-
-      {!loading && error && !hasNotifications && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          Something went wrong. Please try again later.
-        </Alert>
-      )}
-
-      {!loading && !error && !hasNotifications && (
-        <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
-          No notifications found.
+    <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
+      <Stack spacing={3}>
+        <Typography variant="h5" sx={{ fontWeight: 600 }}>
+          Notifications
         </Typography>
-      )}
 
-      <Stack spacing={2}>
-        {notifications.map((n) => (
-          <NotificationCard key={n.id} notification={n} />
-        ))}
+        <ToggleButtonGroup
+          value={filter}
+          exclusive
+          onChange={(_e, val) => {
+            if (val !== null) setFilter(val as NotificationFilter);
+          }}
+          size="small"
+        >
+          {FILTER_OPTIONS.map((opt) => (
+            <ToggleButton key={opt.value} value={opt.value}>
+              {opt.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+
+        {loading && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {!loading && usingFallback && hasNotifications && (
+          <Alert severity="info">
+            Unable to fetch latest notifications. Showing recent updates.
+          </Alert>
+        )}
+
+        {!loading && error && !hasNotifications && (
+          <Alert severity="error">
+            Something went wrong. Please try again later.
+          </Alert>
+        )}
+
+        {!loading && !hasNotifications && !error && (
+          <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
+            No notifications available.
+          </Typography>
+        )}
+
+        {!loading && hasNotifications && (
+          <Stack spacing={2}>
+            {notifications.map((n) => (
+              <NotificationCard key={n.id} notification={n} />
+            ))}
+          </Stack>
+        )}
+
+        {!loading && totalPages > 1 && (
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_e, p) => goToPage(p)}
+              color="primary"
+              shape="rounded"
+            />
+          </Box>
+        )}
       </Stack>
-
-      {totalPages > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_e, p) => goToPage(p)}
-            color="primary"
-            shape="rounded"
-          />
-        </Box>
-      )}
     </Container>
   );
 }
-
