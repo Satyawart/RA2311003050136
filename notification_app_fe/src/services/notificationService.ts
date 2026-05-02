@@ -15,7 +15,7 @@ function parseNotification(raw: RawNotification): Notification {
 }
 
 export async function fetchNotifications(): Promise<Notification[]> {
-  logger.info("Fetching notifications", { url: NOTIFICATIONS_URL });
+  logger.info("Notifications fetch started", { url: NOTIFICATIONS_URL });
 
   let response: Response;
 
@@ -23,7 +23,7 @@ export async function fetchNotifications(): Promise<Notification[]> {
     response = await fetch(NOTIFICATIONS_URL);
   } catch (err) {
     const networkError = "Network error — unable to reach the notification server.";
-    logger.error(networkError, {
+    logger.error("Notifications fetch failed", {
       url: NOTIFICATIONS_URL,
       reason: err instanceof Error ? err.message : "unknown",
     });
@@ -32,7 +32,7 @@ export async function fetchNotifications(): Promise<Notification[]> {
 
   if (!response.ok) {
     const statusMsg = `Server responded with ${response.status} ${response.statusText}`;
-    logger.error("Notification fetch failed", {
+    logger.error("Notifications fetch failed", {
       status: response.status,
       statusText: response.statusText,
     });
@@ -42,7 +42,7 @@ export async function fetchNotifications(): Promise<Notification[]> {
   const body: unknown = await response.json();
   const rawList: RawNotification[] = Array.isArray(body) ? body : [];
 
-  logger.info("Notifications fetched successfully", {
+  logger.info("Notifications fetch succeeded", {
     count: rawList.length,
     hadValidBody: Array.isArray(body),
   });

@@ -39,15 +39,28 @@ const PRIORITY_STYLES: Record<NotificationType, SxProps<Theme>> = {
     borderLeft: "4px solid",
     borderLeftColor: "primary.main",
     bgcolor: "rgba(63, 81, 181, 0.04)",
+    boxShadow: 2,
+    "&:hover": {
+      boxShadow: 6,
+      transform: "translateY(-3px)",
+    },
   },
   result: {
     borderLeft: "3px solid",
     borderLeftColor: "success.main",
     bgcolor: "rgba(76, 175, 80, 0.03)",
+    "&:hover": {
+      boxShadow: 3,
+      transform: "translateY(-2px)",
+    },
   },
   event: {
     borderLeft: "2px solid",
     borderLeftColor: "divider",
+    "&:hover": {
+      boxShadow: 2,
+      transform: "translateY(-1px)",
+    },
   },
 };
 
@@ -61,13 +74,9 @@ function NotificationCardInner({ notification }: NotificationCardProps) {
 
   return (
     <Card
-      variant="outlined"
+      variant={notification.type === "placement" ? "elevation" : "outlined"}
       sx={{
-        transition: "box-shadow 0.2s, transform 0.15s",
-        "&:hover": {
-          boxShadow: 4,
-          transform: "translateY(-2px)",
-        },
+        transition: "box-shadow 0.2s ease, transform 0.15s ease",
         ...prioritySx,
       }}
     >
@@ -85,7 +94,7 @@ function NotificationCardInner({ notification }: NotificationCardProps) {
             label={config.label}
             color={config.color}
             size="small"
-            variant="outlined"
+            variant={notification.type === "placement" ? "filled" : "outlined"}
           />
           <Typography variant="caption" color="text.secondary">
             {formatTimestamp(notification.timestamp)}
@@ -98,4 +107,5 @@ function NotificationCardInner({ notification }: NotificationCardProps) {
 }
 
 export const NotificationCard = memo(NotificationCardInner);
+
 

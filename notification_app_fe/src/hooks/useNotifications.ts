@@ -12,6 +12,7 @@ interface UseNotificationsReturn {
   loading: boolean;
   error: string | null;
   usingFallback: boolean;
+  filteredCount: number;
   filter: NotificationFilter;
   setFilter: (f: NotificationFilter) => void;
   page: number;
@@ -40,7 +41,8 @@ export function useNotifications(): UseNotificationsReturn {
         if (cancelled) return;
 
         if (fetchedNotifications.length === 0) {
-          logger.warn("Empty response from API, falling back to mock data", {
+          logger.warn("Using fallback mock data", {
+            reason: "empty API response",
             mockCount: MOCK_NOTIFICATIONS.length,
           });
           setUsingFallback(true);
@@ -54,9 +56,9 @@ export function useNotifications(): UseNotificationsReturn {
       } catch (err) {
         if (cancelled) return;
 
-        const reason = err instanceof Error ? err.message : "Unknown error";
-        logger.error("Fetch failed, activating mock fallback", {
-          error: reason,
+        const failureReason = err instanceof Error ? err.message : "Unknown error";
+        logger.error("Using fallback mock data", {
+          reason: failureReason,
           mockCount: MOCK_NOTIFICATIONS.length,
         });
 
@@ -106,13 +108,17 @@ export function useNotifications(): UseNotificationsReturn {
     setPage(1);
   }, [filter]);
 
-  const goToPage = useCallback((p: number) => setPage(p), []);
+  const goToPage = useCallback((p: number) => {
+    logger.info("Page changed", { to: p });
+    setPage(p);
+  }, []);
 
   return {
     notifications: pageItems,
     loading,
     error,
     usingFallback,
+    filteredCount: filtered.length,
     filter,
     setFilter: handleFilterChange,
     page: safePage,

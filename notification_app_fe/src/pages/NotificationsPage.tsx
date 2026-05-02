@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
   Container,
   Typography,
@@ -26,6 +27,7 @@ export default function NotificationsPage() {
     loading,
     error,
     usingFallback,
+    filteredCount,
     filter,
     setFilter,
     page,
@@ -33,7 +35,18 @@ export default function NotificationsPage() {
     goToPage,
   } = useNotifications();
 
+  const isInitialRender = useRef(true);
+
+  useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [filter]);
+
   const hasNotifications = notifications.length > 0;
+  const isFilterEmpty = !loading && filteredCount === 0 && filter !== "all";
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
@@ -65,17 +78,24 @@ export default function NotificationsPage() {
 
         {!loading && usingFallback && hasNotifications && (
           <Alert severity="info">
-            Unable to fetch latest notifications. Showing recent updates.
+            We couldn't load the latest notifications. Showing recent updates
+            instead.
           </Alert>
         )}
 
-        {!loading && error && !hasNotifications && (
+        {!loading && error && !hasNotifications && !isFilterEmpty && (
           <Alert severity="error">
             Something went wrong. Please try again later.
           </Alert>
         )}
 
-        {!loading && !hasNotifications && !error && (
+        {!loading && isFilterEmpty && (
+          <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
+            No notifications found for this filter.
+          </Typography>
+        )}
+
+        {!loading && !hasNotifications && !isFilterEmpty && !error && (
           <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
             No notifications available.
           </Typography>
@@ -104,3 +124,4 @@ export default function NotificationsPage() {
     </Container>
   );
 }
+
