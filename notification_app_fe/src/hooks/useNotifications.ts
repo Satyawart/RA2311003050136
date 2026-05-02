@@ -11,6 +11,7 @@ interface UseNotificationsReturn {
   notifications: Notification[];
   loading: boolean;
   error: string | null;
+  usingFallback: boolean;
   filter: NotificationFilter;
   setFilter: (f: NotificationFilter) => void;
   page: number;
@@ -22,6 +23,7 @@ export function useNotifications(): UseNotificationsReturn {
   const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [usingFallback, setUsingFallback] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const [page, setPage] = useState(1);
 
@@ -31,32 +33,35 @@ export function useNotifications(): UseNotificationsReturn {
     async function load() {
       setLoading(true);
       setError(null);
+      setUsingFallback(false);
 
       try {
         const fetchedNotifications = await fetchNotifications();
-        if (!cancelled) {
-          const usingFallback = fetchedNotifications.length === 0;
-          if (usingFallback) {
-            logger.warn("Empty response from API, falling back to mock data", {
-              mockCount: MOCK_NOTIFICATIONS.length,
-            });
-          } else {
-            logger.info("Notifications loaded into state", {
-              count: fetchedNotifications.length,
-            });
-          }
-          setAllNotifications(usingFallback ? MOCK_NOTIFICATIONS : fetchedNotifications);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const errorMessage = err instanceof Error ? err.message : "Unknown error";
-          logger.error("useNotifications: fetch failed, using mock fallback", {
-            error: errorMessage,
+        if (cancelled) return;
+
+        if (fetchedNotifications.length === 0) {
+          logger.warn("Empty response from API, falling back to mock data", {
             mockCount: MOCK_NOTIFICATIONS.length,
           });
-          setError(errorMessage);
+          setUsingFallback(true);
           setAllNotifications(MOCK_NOTIFICATIONS);
+        } else {
+          logger.info("Notifications loaded into state", {
+            count: fetchedNotifications.length,
+          });
+          setAllNotifications(fetchedNotifications);
         }
+      } catch (err) {
+        if (cancelled) return;
+
+        const reason = err instanceof Error ? err.message : "Unknown error";
+        logger.error("Fetch failed, activating mock fallback", {
+          error: reason,
+          mockCount: MOCK_NOTIFICATIONS.length,
+        });
+
+        setUsingFallback(true);
+        setAllNotifications(MOCK_NOTIFICATIONS);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -68,20 +73,17 @@ export function useNotifications(): UseNotificationsReturn {
     };
   }, []);
 
-  // Stage 1: Sort once when raw data changes (not on filter/page change)
   const sorted = useMemo(
     () => sortNotifications(allNotifications),
     [allNotifications]
   );
 
-  // Stage 2: Filter the pre-sorted list (skips re-sort on filter change)
   const filtered = useMemo(
     () =>
       filter === "all" ? sorted : sorted.filter((n) => n.type === filter),
     [sorted, filter]
   );
 
-  // Stage 3: Derive pagination metadata from filtered list
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE)),
     [filtered.length]
@@ -89,7 +91,6 @@ export function useNotifications(): UseNotificationsReturn {
 
   const safePage = Math.min(page, totalPages);
 
-  // Stage 4: Slice the current page (only recalculates on page or filter change)
   const pageItems = useMemo(
     () =>
       filtered.slice(
@@ -111,6 +112,7 @@ export function useNotifications(): UseNotificationsReturn {
     notifications: pageItems,
     loading,
     error,
+    usingFallback,
     filter,
     setFilter: handleFilterChange,
     page: safePage,
@@ -118,4 +120,3 @@ export function useNotifications(): UseNotificationsReturn {
     goToPage,
   };
 }
-
